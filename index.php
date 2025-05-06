@@ -1,3 +1,14 @@
+<?php
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+$recaptchaSiteKey = $_ENV['RECAPTCHA_KEY_PUBLIC'];
+$recaptchaAction = $_ENV['RECAPTCHA_ACTION'];
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,9 +16,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>catchap</title>
-    <script
-        src="https://www.google.com/recaptcha/enterprise.js?render=6Le18h0rAAAAAFhk8K7doMt8lFT27uZIthK9YQeu"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+
 </head>
 
 <body class="bg-gray-100">
@@ -27,6 +37,11 @@
                 <input type="email" id="email" name="email" class="w-full p-2 mt-1 border border-gray-300 rounded-md"
                     required>
             </div>
+            <div>
+                <label for="subject" class="block text-sm font-medium text-gray-700">Asunto</label>
+                <input type="text" id="subject" name="subject" class="w-full p-2 mt-1 border border-gray-300 rounded-md"
+                    required>
+            </div>
 
             <div class="mb-4">
                 <label for="message" class="block text-sm font-medium text-gray-700">Mensaje:</label>
@@ -35,11 +50,33 @@
             </div>
 
             <div class="text-center">
-                <input type="submit" value="Enviar"
+                <input type="hidden" id="recaptcha_response" name="recaptcha_response">
+
+                <button type="submit" id="submitBtn"
                     class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 cursor-pointer">
+                    Enviar
+                </button>
             </div>
         </form>
     </div>
+
+    <script
+        src="https://www.google.com/recaptcha/enterprise.js?render=<?= $recaptchaSiteKey ?>"></script>
+    <script>
+        const form = document.querySelector('form');
+        const submitBtn = document.getElementById('submitBtn');
+
+        submitBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            grecaptcha.enterprise.ready(async () => {
+                const token = await grecaptcha.enterprise.execute('<?= $recaptchaSiteKey ?>', {
+                    action: '<?= $recaptchaAction ?>'
+                });
+                document.getElementById('recaptcha_response').value = token;
+                form.submit(); // solo se envía después de tener el token
+            });
+        });
+    </script>
 
 </body>
 
